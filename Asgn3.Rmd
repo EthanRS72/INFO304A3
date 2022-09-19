@@ -98,6 +98,14 @@ blends <- as.data.frame(blends)
 results <- cbind(results, blends)
 results <- results %>% arrange(risk)
 results <- results[c(10, 30, 50),]
+results <- results %>% rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>% 
+  rowwise() %>% mutate(Bonds= sum(c_across(13:22))) %>% 
+  rowwise() %>% mutate(Cash= sum(c_across(23:32))) %>% 
+  rowwise() %>% mutate(Total= sum(c_across(3:32))) %>% 
+  mutate(roi = -roi) %>% 
+  select(-c(3:32))
+results[,c(3:6)] <- results[,c(3:6)] * 100
+results[,c(3:6)] <- round(results[,c(3:6)],2)
 ```
 
 
@@ -107,7 +115,22 @@ Write an R script to produce this figure given the output from nsga2. Submit you
 and the associated figure.
 
 ```{r, warning=FALSE}
-
+tab1 <- as.data.frame(portfolio$value)
+colnames(tab1) <- c("roi", "risk")
+blends <- portfolio$par
+blends[which(blends < 0.05)] = 0
+blends[which(blends > 0.20)] = 0
+blends <- as.data.frame(blends)
+tab1 <- cbind(tab1, blends)
+tab1 <- tab1 %>% arrange(risk)
+tab1 <- tab1 %>% rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>% 
+  rowwise() %>% mutate(Bonds= sum(c_across(13:22))) %>% 
+  rowwise() %>% mutate(Cash= sum(c_across(23:32))) %>% 
+  rowwise() %>% mutate(Total= sum(c_across(3:32))) %>% 
+  mutate(roi = -roi) %>% 
+  select(-c(3:32))
+tab1[,c(3:6)] <- tab1[,c(3:6)] * 100
+tab1[,c(3:6)] <- round(tab1[,c(3:6)],2)
 ```
 
 5. A matrix representing the estimated correlation between any two investments is given in
