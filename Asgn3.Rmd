@@ -12,19 +12,24 @@ set.seed(5)
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(dev = 'png') # make images smaller resolution in pdf
 source("invest.R", local = knitr::knit_global())
+source("invest2.0.R", local = knitr::knit_global())
+library(tidyverse)
 ```
 
 ## QUESTION ONE (15 MARKS)
 
 Assume that you do not know the K-means clustering algorithm, but want to build a clustering tool that finds K cluster centres given a table of numeric data with F features (i.e. F explanatories, but no response). You decide to use a genetic algorithm (GA) to evolve the solution for the cluster centres. 
 
-1. Given some K value (number of clusters to evolve) and number of features F of the data,
-describe an appropriate representation for an individual. 
+1. Given some K value (number of clusters to evolve) and number of features F of the data, describe an appropriate representation for an individual. 
 
-2. What is the fitness function for this problem? That is, what makes a good solution to a
-clustering algorithm, and how is this evaluated? Assume that you have a data table of N
-rows and F numeric feature variables.
+I believe the most appropriate representation of an individual in this scenario would be a fixed length vector of length F*K, this vector could also be interpreted as a nested list with K lists involved each initialized with F values, which mark a point within the axes of the data to be clustered. Because clustering is typically a distance based algorithm, both the points to be clustered and the chromosome vector should be standardized values (Mean = 0, SD = 1). This is important as it reduces the risk of a difference in scale between features biasing the location of the cluster centers.
 
+(F1, ..., FN) * K -> all values with Mean = 0, SD = 1
+
+
+2. What is the fitness function for this problem? That is, what makes a good solution to a clustering algorithm, and how is this evaluated? Assume that you have a data table of N rows and F numeric feature variables.
+
+For this problem I would be most likely to use the total euclidean distance of all points in the cluster to the center as a fitness function as we want all observations within a cluster to be close to the set cluster point. This would be the sum of the individual euclidean distances for the subset of N observations closest to a given point K. Any good clustering algorithm should be able to separate observations into clearly defined groups based on their similarity. A indicator of good clustering will be if the clusters have a low variance within the cluster but the variation between clusters is high. This means that the clustering algorithm has been successful in finding separation in the features. Depending on the data this could possibly be a more reliable fitness function, this would most likely happen in cases when the data cannot be linearly separated. 
 
 \newpage
 
@@ -33,21 +38,16 @@ rows and F numeric feature variables.
 You are tasked with using a k-nearest neighbour (kNN) model to do prediction, but the dataset you are using has a large number of explanatories. Assume you have N explanatory variables and a response Y.
 
 
-Rather than doing more traditional feature reduction/selection methods, you decide to use a
-Genetic Algorithm (GA) to search for the best M features (M <= N) to optimise the predictive
-behaviour of the kNN model for a FIXED value of k. 
+Rather than doing more traditional feature reduction/selection methods, you decide to use a Genetic Algorithm (GA) to search for the best M features (M <= N) to optimise the predictive behaviour of the kNN model for a FIXED value of k. 
 
-Describe how you would set up this combined GA and kNN model to search for the “best” kNN
-model for a specific dataset and set value of k. Ensure you include:
+Describe how you would set up this combined GA and kNN model to search for the “best” kNN model for a specific dataset and set value of k. Ensure you include:
 
 1. A representation (and how you would use the representation) for the GA and kNN;
 2. The fitness function and example search operators (crossover, mutation); 
 
 Now assume that you also want to optimise the number of neighbours k. 
 
-3. Define a representation that would allow you to optimise both the value of “k” and the M
-features during the evolution. Ensure you explain how the representation is interpreted and
-used within the model. 
+3. Define a representation that would allow you to optimise both the value of “k” and the M features during the evolution. Ensure you explain how the representation is interpreted and used within the model. 
 
 
 \newpage
@@ -58,8 +58,7 @@ This section deals with modelling the selection of stocks, bonds and cash to mak
 
 The ROI column is the percentage predicted return on investment, the Risk column is a measure of the risk associated with this particular investment, and the Type indicates the type of investment. Note that each row is labelled with the type of investment and a number, so that you can (if needed) refer to individual investments. 
 
-1. Visualise and discuss the different ROI and Risk associated with Stocks, Bonds and Cash. In addition, load, visualise and give a simple interpretation for the correlation table (HINT:
-See part 5 for details of “corr.tab”). 
+1. Visualise and discuss the different ROI and Risk associated with Stocks, Bonds and Cash. In addition, load, visualise and give a simple interpretation for the correlation table (HINT: See part 5 for details of “corr.tab”). 
 
 ```{r, warning=FALSE}
 library(corrplot)
@@ -72,8 +71,10 @@ legend("topleft", legend=c("Stocks", "Bonds", "Cash"),
 corrplot(as.matrix(invest.corr))
 ```
 
-2. Run the “invest.R” script. This script does a multi-objective criteria analysis to determine the best mix of stocks, bonds and cash over a range of tradeoffs. Describe in words what the “invest.R” script is doing. Ensure that you address how a solution is represented and interpreted, and the relationship between the solution space, the objective space and the
-constraints. 
+
+
+
+2. Run the “invest.R” script. This script does a multi-objective criteria analysis to determine the best mix of stocks, bonds and cash over a range of tradeoffs. Describe in words what the “invest.R” script is doing. Ensure that you address how a solution is represented and interpreted, and the relationship between the solution space, the objective space and the constraints. 
 
 ```{r, warning=FALSE}
 set.seed(5)
@@ -85,14 +86,18 @@ par <- as.data.frame(head(portfolio$par, 2))
 different brokerage houses (i.e. businesses that take your money and invest it to give you a
 return). 
 
-Using the result of the nsga2 model you have previously run, examine and present the blend
-of stocks, bonds and cash for a low risk, moderate risk and high risk investment blend (just
-pick one from each general category). Discuss, in relation to Table 1, the level of risk that
-seems to be taken by the brokerage houses and whether the one year return performance is
-related to the associated risk of the brokerage house. 
+Using the result of the nsga2 model you have previously run, examine and present the blend of stocks, bonds and cash for a low risk, moderate risk and high risk investment blend (just pick one from each general category). Discuss, in relation to Table 1, the level of risk that seems to be taken by the brokerage houses and whether the one year return performance is related to the associated risk of the brokerage house. 
 
 ```{r, warning=FALSE}
-
+results <- as.data.frame(portfolio$value)
+colnames(results) <- c("roi", "risk")
+blends <- portfolio$par
+blends[which(blends < 0.05)] = 0
+blends[which(blends > 0.20)] = 0
+blends <- as.data.frame(blends)
+results <- cbind(results, blends)
+results <- results %>% arrange(risk)
+results <- results[c(10, 30, 50),]
 ```
 
 
@@ -112,11 +117,9 @@ some of the investments are decreasing, others in the portfolio may behave diffe
 reduces the risk of the portfolio as a whole losing money and should result in more stable
 returns. 
 
-Extend the model in invest.R to have an additional objective which is to minimise the
-correlation for the investment blend. 
+Extend the model in invest.R to have an additional objective which is to minimise the correlation for the investment blend. 
 
-a) Describe in words the approach you have chosen and explain the rational for the
-model. 
+a) Describe in words the approach you have chosen and explain the rational for the model. 
 
 b) Include your R code for the function that calculates this objective. 
 
