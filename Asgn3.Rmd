@@ -5,8 +5,11 @@ output:
   pdf_document: default
 html_document:
   df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
-  
+
 ```{r setup, include=FALSE}
 set.seed(5)
 knitr::opts_chunk$set(echo = TRUE)
@@ -18,47 +21,101 @@ library(tidyverse)
 
 ## QUESTION ONE (15 MARKS)
 
-Assume that you do not know the K-means clustering algorithm, but want to build a clustering tool that finds K cluster centres given a table of numeric data with F features (i.e. F explanatories, but no response). You decide to use a genetic algorithm (GA) to evolve the solution for the cluster centres. 
+Assume that you do not know the K-means clustering algorithm, but want
+to build a clustering tool that finds K cluster centres given a table of
+numeric data with F features (i.e. F explanatories, but no response).
+You decide to use a genetic algorithm (GA) to evolve the solution for
+the cluster centres.
 
-1. Given some K value (number of clusters to evolve) and number of features F of the data, describe an appropriate representation for an individual. 
+1.  Given some K value (number of clusters to evolve) and number of
+    features F of the data, describe an appropriate representation for
+    an individual.
 
-I believe the most appropriate representation of an individual in this scenario would be a fixed length vector of length F*K, this vector could also be interpreted as a nested list with K lists involved each initialized with F values, which mark a point within the axes of the data to be clustered. Because clustering is typically a distance based algorithm, both the points to be clustered and the chromosome vector should be standardized values (Mean = 0, SD = 1). This is important as it reduces the risk of a difference in scale between features biasing the location of the cluster centers.
+I believe the most appropriate representation of an individual in this
+scenario would be a fixed length vector of length F\*K, this vector
+could also be interpreted as a nested list with K lists involved each
+initialized with F values, which mark a point within the axes of the
+data to be clustered. Because clustering is typically a distance based
+algorithm, both the points to be clustered and the chromosome vector
+should be standardized values (Mean = 0, SD = 1). This is important as
+it reduces the risk of a difference in scale between features biasing
+the location of the cluster centers.
 
-(F1, ..., FN) * K -> all values with Mean = 0, SD = 1
+(F1, ..., FN) \* K -\> all values with Mean = 0, SD = 1
 
+2.  What is the fitness function for this problem? That is, what makes a
+    good solution to a clustering algorithm, and how is this evaluated?
+    Assume that you have a data table of N rows and F numeric feature
+    variables.
 
-2. What is the fitness function for this problem? That is, what makes a good solution to a clustering algorithm, and how is this evaluated? Assume that you have a data table of N rows and F numeric feature variables.
-
-For this problem I would be most likely to use the total euclidean distance of all points in the cluster to the center as a fitness function as we want all observations within a cluster to be close to the set cluster point. This would be the sum of the individual euclidean distances for the subset of N observations closest to a given point K. Any good clustering algorithm should be able to separate observations into clearly defined groups based on their similarity. A indicator of good clustering will be if the clusters have a low variance within the cluster but the variation between clusters is high. This means that the clustering algorithm has been successful in finding separation in the features. Depending on the data this could possibly be a more reliable fitness function, this would most likely happen in cases when the data cannot be linearly separated. 
+For this problem I would be most likely to use the total euclidean
+distance of all points in the cluster to the center as a fitness
+function as we want all observations within a cluster to be close to the
+set cluster point. This would be the sum of the individual euclidean
+distances for the subset of N observations closest to a given point K.
+Any good clustering algorithm should be able to separate observations
+into clearly defined groups based on their similarity. A indicator of
+good clustering will be if the clusters have a low variance within the
+cluster but the variation between clusters is high. This means that the
+clustering algorithm has been successful in finding separation in the
+features. Depending on the data this could possibly be a more reliable
+fitness function, this would most likely happen in cases when the data
+cannot be linearly separated.
 
 \newpage
 
 ## QUESTION TWO (25 MARKS)
 
-You are tasked with using a k-nearest neighbour (kNN) model to do prediction, but the dataset you are using has a large number of explanatories. Assume you have N explanatory variables and a response Y.
+You are tasked with using a k-nearest neighbour (kNN) model to do
+prediction, but the dataset you are using has a large number of
+explanatories. Assume you have N explanatory variables and a response Y.
 
+Rather than doing more traditional feature reduction/selection methods,
+you decide to use a Genetic Algorithm (GA) to search for the best M
+features (M \<= N) to optimise the predictive behaviour of the kNN model
+for a FIXED value of k.
 
-Rather than doing more traditional feature reduction/selection methods, you decide to use a Genetic Algorithm (GA) to search for the best M features (M <= N) to optimise the predictive behaviour of the kNN model for a FIXED value of k. 
+Describe how you would set up this combined GA and kNN model to search
+for the "best" kNN model for a specific dataset and set value of k.
+Ensure you include:
 
-Describe how you would set up this combined GA and kNN model to search for the “best” kNN model for a specific dataset and set value of k. Ensure you include:
+1.  A representation (and how you would use the representation) for the
+    GA and kNN;
+2.  The fitness function and example search operators (crossover,
+    mutation);
+    
+To perform feature selection for a model using a genetic algorithm I would represent each individual in the population as a fixed length binary vector. Each index in this vector will correspond to an explanatory variable where a one represents the predictor being included in the model and a zero represents the predictor being excluded from the model. The data being modeled should be split into training and testing data. The model can then be built from all predictors the chromosome set to a value of one. I also believe the train test splits should be randomly generated for each individual model to ensure a significant predictor remains significant across different training sets. The fitness function for each individual will be the testing set error where a smaller value is considered a higher fitness.
 
-1. A representation (and how you would use the representation) for the GA and kNN;
-2. The fitness function and example search operators (crossover, mutation); 
+For crossover and mutation I would be most likely to use a uniform crossover as each index of the chromosome only has two possible values. The uniform crossover could also contain a slight bias involved to give significant predictors in a model a higher chance of being kept if the other parent does not contain that predictor. I also believe in this case for mutation it makes sense to select a random index from the chromosome vector and flip the value. This would allow mutated chromosomes to remain similar to the parents but still retain some diversity in the population as the generations progress. In this case I also believe it would be appropriate to factor in some elitism by keeping the best performing model from one generation in the next generation to make sure a potentially optimal model is not lost.
+    
 
-Now assume that you also want to optimise the number of neighbours k. 
+### Now assume that you also want to optimise the number of neighbours k.
 
-3. Define a representation that would allow you to optimise both the value of “k” and the M features during the evolution. Ensure you explain how the representation is interpreted and used within the model. 
-
+3.  Define a representation that would allow you to optimise both the
+    value of "k" and the M features during the evolution. Ensure you
+    explain how the representation is interpreted and used within the
+    model.
+    
+To represent K in the chromosome I established above I would add an extra index in the vector to store a value of k. For the predictors themselves I would opt to keep the same methods for crossover and mutation, but for the value of k I believe it would be best to form a new value of K from the parents, this value would lie within the range of the two parent's value for K and could be calculated based on the fitness scores of the parents to correspond closer to the higher performing parent. To main a stochastic element I would introduce a form of mutation where the value of K would be modified to become higher or lower by 10% of it's current value. This would allow for some diversity of K to remain so that different models so that potentially optimal values for K that have been excluded from the range of the population can continue to be trialed within a small subset of the population, but this should result in some value of K that is optimal given the models generated through the generations. To maintain validity and a reasonable search space I would include constraints to ensure the value of K is initialized and always lies within one and the square root of N, where N is the number of observations in the training data set. 
 
 \newpage
 
 ## QUESTION THREE (60 MARKS) - Investment Portfolio Management
 
-This section deals with modelling the selection of stocks, bonds and cash to make up an investment portfolio. Load the data as follows: invest <- read.table("invest.tab") 
+This section deals with modelling the selection of stocks, bonds and
+cash to make up an investment portfolio. Load the data as follows:
+invest \<- read.table("invest.tab")
 
-The ROI column is the percentage predicted return on investment, the Risk column is a measure of the risk associated with this particular investment, and the Type indicates the type of investment. Note that each row is labelled with the type of investment and a number, so that you can (if needed) refer to individual investments. 
+The ROI column is the percentage predicted return on investment, the
+Risk column is a measure of the risk associated with this particular
+investment, and the Type indicates the type of investment. Note that
+each row is labelled with the type of investment and a number, so that
+you can (if needed) refer to individual investments.
 
-1. Visualise and discuss the different ROI and Risk associated with Stocks, Bonds and Cash. In addition, load, visualise and give a simple interpretation for the correlation table (HINT: See part 5 for details of “corr.tab”). 
+1.  Visualise and discuss the different ROI and Risk associated with
+    Stocks, Bonds and Cash. In addition, load, visualise and give a
+    simple interpretation for the correlation table (HINT: See part 5
+    for details of "corr.tab").
 
 ```{r, warning=FALSE}
 library(corrplot)
@@ -71,10 +128,12 @@ legend("topleft", legend=c("Stocks", "Bonds", "Cash"),
 corrplot(as.matrix(invest.corr))
 ```
 
-
-
-
-2. Run the “invest.R” script. This script does a multi-objective criteria analysis to determine the best mix of stocks, bonds and cash over a range of tradeoffs. Describe in words what the “invest.R” script is doing. Ensure that you address how a solution is represented and interpreted, and the relationship between the solution space, the objective space and the constraints. 
+2.  Run the "invest.R" script. This script does a multi-objective
+    criteria analysis to determine the best mix of stocks, bonds and
+    cash over a range of tradeoffs. Describe in words what the
+    "invest.R" script is doing. Ensure that you address how a solution
+    is represented and interpreted, and the relationship between the
+    solution space, the objective space and the constraints.
 
 ```{r, warning=FALSE}
 set.seed(5)
@@ -82,11 +141,16 @@ source("invest.R")
 par <- as.data.frame(head(portfolio$par, 2))
 ```
 
-3. Table 1 (below) shows the recommended blend of stocks, bonds and cash for a number of
-different brokerage houses (i.e. businesses that take your money and invest it to give you a
-return). 
+3.  Table 1 (below) shows the recommended blend of stocks, bonds and
+    cash for a number of different brokerage houses (i.e. businesses
+    that take your money and invest it to give you a return).
 
-Using the result of the nsga2 model you have previously run, examine and present the blend of stocks, bonds and cash for a low risk, moderate risk and high risk investment blend (just pick one from each general category). Discuss, in relation to Table 1, the level of risk that seems to be taken by the brokerage houses and whether the one year return performance is related to the associated risk of the brokerage house. 
+Using the result of the nsga2 model you have previously run, examine and
+present the blend of stocks, bonds and cash for a low risk, moderate
+risk and high risk investment blend (just pick one from each general
+category). Discuss, in relation to Table 1, the level of risk that seems
+to be taken by the brokerage houses and whether the one year return
+performance is related to the associated risk of the brokerage house.
 
 ```{r, warning=FALSE}
 results <- as.data.frame(portfolio$value)
@@ -106,13 +170,15 @@ results <- results %>% rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>%
   select(-c(3:32))
 results[,c(3:6)] <- results[,c(3:6)] * 100
 results[,c(3:6)] <- round(results[,c(3:6)],2)
+
+results
 ```
 
-
-4. Examine the plot shown in Figure 1. This shows how the percentage of bonds, stocks and
-cash vary as you move along the pareto front from the least to greatest percentage return.
-Write an R script to produce this figure given the output from nsga2. Submit your R code
-and the associated figure.
+4.  Examine the plot shown in Figure 1. This shows how the percentage of
+    bonds, stocks and cash vary as you move along the pareto front from
+    the least to greatest percentage return. Write an R script to
+    produce this figure given the output from nsga2. Submit your R code
+    and the associated figure.
 
 ```{r, warning=FALSE}
 tab1 <- as.data.frame(portfolio$value)
@@ -133,19 +199,23 @@ tab1[,c(3:6)] <- tab1[,c(3:6)] * 100
 tab1[,c(3:6)] <- round(tab1[,c(3:6)],2)
 tab1
 ```
+\newpage
 
-5. A matrix representing the estimated correlation between any two investments is given in
-the table corr.tab. For our example with 30 investments this is a 30x30 table. A good
-portfolio should aim for investments where correlation of behaviour is minimised, so that if
-some of the investments are decreasing, others in the portfolio may behave differently. This
-reduces the risk of the portfolio as a whole losing money and should result in more stable
-returns. 
+5.  A matrix representing the estimated correlation between any two
+    investments is given in the table corr.tab. For our example with 30
+    investments this is a 30x30 table. A good portfolio should aim for
+    investments where correlation of behaviour is minimised, so that if
+    some of the investments are decreasing, others in the portfolio may
+    behave differently. This reduces the risk of the portfolio as a
+    whole losing money and should result in more stable returns.
 
-Extend the model in invest.R to have an additional objective which is to minimise the correlation for the investment blend. 
+Extend the model in invest.R to have an additional objective which is to
+minimise the correlation for the investment blend.
 
-a) Describe in words the approach you have chosen and explain the rational for the model. 
+a)  Describe in words the approach you have chosen and explain the
+    rational for the model.
 
-b) Include your R code for the function that calculates this objective. 
+b)  Include your R code for the function that calculates this objective.
 
 ```{r, warning=FALSE}
 weightedcor <- function(p,c){
@@ -153,11 +223,12 @@ weightedcor <- function(p,c){
 }
 ```
 
-c) Produce pairwise plots for the 3 objectives after a successful optimisation. 
+c)  Produce pairwise plots for the 3 objectives after a successful
+    optimisation.
 
 ```{r, warning=FALSE}
 pairs(tab1)
 ```
 
-d) Discuss and justify what type of tradeoff of risk/return/correlation you would choose
-for a portfolio based on the results from part (c). 
+d)  Discuss and justify what type of tradeoff of risk/return/correlation
+    you would choose for a portfolio based on the results from part (c).

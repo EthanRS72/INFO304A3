@@ -12,6 +12,7 @@ library(mco)
 # a portfolio are in "invest.tab"
 #
 invest <- read.table("invest.tab")
+corr <- read.table("corr.tab")
 #
 # Determine number of options from the invest table
 #
