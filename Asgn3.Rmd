@@ -128,6 +128,11 @@ legend("topleft", legend=c("Stocks", "Bonds", "Cash"),
 corrplot(as.matrix(invest.corr))
 ```
 
+From these plots a clear relationship can be seen between the type of investment made to the resulting risk and return. There is a clearly defined relationship between risk and return as well, the larger the risk is on an investment the larger the potential return is as well. This also results in a higher risk investment having a larger potential loss as well. From the scatter plot it can be shown that cash investments are the safest to make but provide a very low return while investments made through stocks can lead to a potentially much higher return at a greater risk of losing money. Investments made through bonds appear to achieve a fair balance between the two.
+
+The correlation plot of each investment option validates what the scatter plot is showing. Colinearity is very high between investments of the same. Because of this if multiple investments of the same type of made there will be a lack of diversity within that investment portfolio which could potentially lead to a large loss if the investments begin to lose money. The plot also shows that there is little to no relationship between the behavior of cash and stock investments, while bonds once again appear to have a fairly balenced relationship with both stocks and cash.
+
+
 2.  Run the "invest.R" script. This script does a multi-objective
     criteria analysis to determine the best mix of stocks, bonds and
     cash over a range of tradeoffs. Describe in words what the
@@ -161,7 +166,7 @@ blends[which(blends > 0.20)] = 0
 blends <- as.data.frame(blends)
 results <- cbind(results, blends)
 results <- results %>% arrange(risk)
-results <- results[c(10, 30, 50),]
+results <- results[c(5, 25, 45),]
 results <- results %>% rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>% 
   rowwise() %>% mutate(Bonds= sum(c_across(13:22))) %>% 
   rowwise() %>% mutate(Cash= sum(c_across(23:32))) %>% 
@@ -170,9 +175,13 @@ results <- results %>% rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>%
   select(-c(3:32))
 results[,c(3:6)] <- results[,c(3:6)] * 100
 results[,c(3:6)] <- round(results[,c(3:6)],2)
-
 results
 ```
+
+Here I have presented examples of a low, medium and high risk portfolio ordered by the level of risk. Comparing these examples to those used by different brokerage houses in Table 1 I believe brokerage houses tend to opt for high risk portfolios due to the stocks typically making up the largest proportion of the portfolios out of the three investment types available. The one year return on these portfolios is almost most similar to the return on the high risk portfolios generated from invest.R through nsga2. The only brokerage house I believe could possibly be associated with having a medium risk portfolio is Memll Lynch due to bonds which have been previously defined as achieving a good balance between risk and return having the largest share of the portfolio. This portfolio still borders with being considered a high risk portfolio due to the large amount of investment of stocks being made.
+
+The high one year returns on these investment portfolios seem to align with a high risk when compared with the portfolios generated through nsga2, as across both tables a high investment in the stock market appears to give much higher potential returns so I believe it is appropriate to assume that the brokerage house portfolios will also share the high risk associated with similiar portfolios from nsga2.
+
 
 4.  Examine the plot shown in Figure 1. This shows how the percentage of
     bonds, stocks and cash vary as you move along the pareto front from
@@ -188,7 +197,8 @@ blends[which(blends < 0.05)] = 0
 blends[which(blends > 0.20)] = 0
 blends <- as.data.frame(blends)
 tab1 <- cbind(tab1, blends)
-tab1 <- tab1 %>% arrange(risk) %>% 
+tab1 <- tab1[which(portfolio$pareto.optimal),]
+tab1 <- tab1 %>% arrange(roi) %>% 
   rowwise() %>% mutate(Stocks= sum(c_across(3:12))) %>% 
   rowwise() %>% mutate(Bonds= sum(c_across(13:22))) %>% 
   rowwise() %>% mutate(Cash= sum(c_across(23:32))) %>% 
