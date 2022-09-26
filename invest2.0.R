@@ -93,9 +93,22 @@ ROI <- function(x)
   roi <- sum(invest$ROI[selected]*x[selected])
   return(-roi) # Since nsgaII minimises we take the negative
 }
+
 mycorr <- function(x)
 {
   selected <- which(x >= minAMOUNT)
+  comb <- as.data.frame(combn(unique(selected), 2))
+  values <- rep(0, ncol(comb))
+  for (i in 1:length(values)) {
+    aidx <- comb[,i][1]
+    bidx <- comb[,i][2]
+    c <- corr[aidx,bidx]
+    a <- x[aidx]
+    b <- x[bidx]
+    total_prop <- a + b
+    values[i] <- (1 + 2*(1-total_prop-a)*(1-total_prop-b)*c) / (1+2*(1-total_prop-a)*(1-total_prop-b))
+  }
+  return(mean(values))
   
 }
 #################################
@@ -103,7 +116,7 @@ mycorr <- function(x)
 #################################
 # This is to be MINIMISED
 # Only include options that are greater than the minAMOUNT
-##############################################################
+############################################################## 
 RISK <- function(x)
 {
   selected <- which(x >= minAMOUNT)
@@ -117,7 +130,7 @@ RISK <- function(x)
 ###################################################
 funs <- function(x)
 {
-  return(c(ROI(x),RISK(x)))
+  return(c(ROI(x),RISK(x), mycorr(x)))
 }
 ######################################################
 # Here are the constraints
@@ -145,17 +158,17 @@ upper = rep(maxAMOUNT,numberOptions)
 ###########################################################
 # CALL nsga2 to find the pareto optimal solutions
 ###########################################################
-portfolio <- nsga2(funs,
-                   idim=numberOptions, # inputs for each option,
-                   odim=2, # outputs (ROI,RISK)
-                   popsize=52,
-                   generations=500,
-                   lower.bounds=lower,
-                   upper.bounds=upper,
-                   constraints = constraintFNS,
-                   cdim=3) # 3 constraints
+portfolio2 <- nsga2(funs,
+                    idim=numberOptions, # inputs for each option,
+                    odim=3, # outputs (ROI,RISK)
+                    popsize=52,
+                    generations=500,
+                    lower.bounds=lower,
+                    upper.bounds=upper,
+                    constraints = constraintFNS,
+                    cdim=3) # 3 constraints
 
 ######## Plot the pareto front using default plotting
 ###########################################################
-plot(portfolio,xlab="-ROI (%)",ylab="RISK",main="Objective Space")
+#plot(portfolio,xlab="-ROI (%)",ylab="RISK",main="Objective Space")
 
